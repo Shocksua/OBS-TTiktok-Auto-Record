@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OBS TTiktok Auto-Record — STATION</title>
+  <link rel="icon" href="../assets/icons/icon-32.png">
+  <link rel="stylesheet" href="station.css">
+  <script type="module" src="station.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">
+      <img src="../assets/icons/icon-48.png" alt="">
+      <h1>OBS TTiktok Auto-Record <span>STATION</span></h1>
+    </div>
+    <nav aria-label="Acciones de estación">
+      <button type="button" id="capture-window" title="Abre la ventana limpia. Usá Esc para recuperar los controles.">Ventana de captura</button>
+      <button type="button" id="settings-button">Ajustes</button>
+    </nav>
+  </header>
+
+  <main class="console">
+    <section class="program panel" aria-label="Reproductor">
+      <div class="source-bar">
+        <div class="source-meta">
+          <h2 id="source-name">Sin fuente</h2>
+          <p id="source-spec">Resolución y FPS al reproducir</p>
+        </div>
+        <span id="play-state" class="indicator" data-state="idle">En espera</span>
+      </div>
+      <div id="viewport" class="viewport">
+        <video id="video" playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
+        <div class="empty-view" id="empty-view">
+          <span class="empty-play" aria-hidden="true">▶</span>
+          <p id="empty-text">Abrí un video para empezar</p>
+        </div>
+      </div>
+      <div class="transport">
+        <div class="timeline">
+          <span id="elapsed">0:00</span>
+          <input id="seek" type="range" min="0" max="100" value="0" step="0.01" aria-label="Posición de reproducción" disabled>
+          <span id="duration">—</span>
+        </div>
+        <div class="transport-row">
+          <button type="button" id="play" class="primary" disabled>Reproducir</button>
+          <button type="button" id="pause" disabled>Pausar</button>
+          <button type="button" id="stop" disabled>Detener</button>
+          <div class="volume-field"><label for="volume">Volumen</label><input id="volume" type="range" min="0" max="100" value="80"><output id="volume-value" for="volume">80 %</output></div>
+          <button type="button" id="fullscreen" disabled>Pantalla completa</button>
+        </div>
+        <div class="source-actions">
+          <button type="button" id="open-files">Abrir video</button>
+          <button type="button" id="open-url">Abrir URL</button>
+          <button type="button" id="open-subtitles" disabled>Subtítulos</button>
+          <button type="button" id="clear-subtitles" hidden>Quitar subtítulos</button>
+          <label class="check"><input type="checkbox" id="repeat"> Repetir</label>
+        </div>
+        <p class="notice" id="notice" role="status" aria-live="polite">Elegí un archivo o enlace directo autorizado sin DRM.</p>
+      </div>
+    </section>
+
+    <aside class="side" aria-label="Grabación y salidas">
+      <section class="panel side-panel">
+        <div class="panel-head"><h2>Grabación en Chrome</h2><span id="record-state" class="indicator" data-state="idle">Lista</span></div>
+        <div class="row">
+          <button type="button" id="record-start" class="record-button" disabled>Grabar WEBM</button>
+          <button type="button" id="record-stop" disabled>Detener</button>
+        </div>
+        <div class="row spread">
+          <label class="check"><input type="checkbox" id="auto-record"> Grabar al reproducir</label>
+          <button type="button" id="history-button" class="subtle">Historial</button>
+        </div>
+      </section>
+
+      <section class="panel side-panel">
+        <div class="panel-head"><h2>OBS Studio</h2><button type="button" id="obs-setup" class="subtle">Conexión</button></div>
+        <p class="detail" role="status" id="obs-status">OBS desconectado</p>
+        <label for="obs-scene">Escena</label>
+        <select id="obs-scene" disabled><option value="">Conectá OBS</option></select>
+        <div class="row">
+          <button type="button" id="obs-use-scene" disabled>Activar escena</button>
+          <button type="button" id="obs-add-source" disabled>Añadir ventana</button>
+        </div>
+        <div class="row">
+          <button type="button" id="obs-record" disabled>Grabar en OBS</button>
+          <span class="detail" id="obs-record-state"></span>
+        </div>
+      </section>
+
+      <section class="panel side-panel tiktok-panel">
+        <div class="panel-head"><h2>TikTok LIVE Studio</h2><button type="button" id="tiktok-button" class="subtle">Ver pasos</button></div>
+        <p class="detail">Captura de ventana</p>
+      </section>
+
+      <section class="panel side-panel queue-panel">
+        <div class="panel-head"><h2>Lista de reproducción</h2><span id="queue-count" class="detail">0 videos</span></div>
+        <p id="queue-empty" class="detail">Los videos que abras se agregan acá.</p>
+        <ol id="queue" aria-label="Videos de la lista"></ol>
+      </section>
+    </aside>
+  </main>
+
+  <input type="file" id="file-input" accept="video/*,.mp4,.webm,.mkv,.mov,.m4v,.ogv" multiple hidden>
+  <input type="file" id="subtitle-input" accept=".vtt,text/vtt" hidden>
+
+  <dialog id="url-dialog">
+    <form id="url-form">
+      <h2>Abrir URL multimedia</h2>
+      <label for="url-input">Enlace directo</label>
+      <input id="url-input" name="url" type="url" inputmode="url" placeholder="https://ejemplo.com/video.mp4" required autocomplete="off" autofocus>
+      <p class="form-info">Usá archivos de video autorizados y sin DRM.</p>
+      <p class="dialog-message" id="url-message" role="status" hidden></p>
+      <div class="dialog-actions"><button type="button" data-close>Cancelar</button><button class="primary" type="submit">Abrir</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="obs-dialog">
+    <form id="obs-form">
+      <h2>Conexión con OBS Studio</h2>
+      <p class="form-info">En OBS, abrí Herramientas → Configuración del servidor WebSocket. Activá el servidor y verificá el puerto.</p>
+      <div class="form-grid">
+        <div><label for="obs-host">Dirección local</label><input id="obs-host" name="host" required placeholder="127.0.0.1"></div>
+        <div><label for="obs-port">Puerto</label><input id="obs-port" name="port" type="number" min="1" max="65535" required></div>
+      </div>
+      <label for="obs-password">Contraseña de WebSocket</label>
+      <input id="obs-password" name="password" type="password" autocomplete="off" spellcheck="false">
+      <label class="check"><input type="checkbox" id="obs-audio"> Incluir audio de Chrome al añadir la ventana</label>
+      <p class="form-info">Elegí una sola fuente de audio para Chrome en el mezclador de OBS.</p>
+      <details><summary>Configurar la captura desde OBS</summary><p class="form-info">En Fuentes, agregá Captura de ventana y elegí «OBS TTiktok Auto-Record — STATION». Comprobá imagen y sonido antes de grabar.</p></details>
+      <p id="obs-dialog-message" class="dialog-message" role="status" hidden></p>
+      <div class="dialog-actions"><button type="button" data-close>Cerrar</button><button type="button" id="obs-disconnect" hidden>Desconectar</button><button type="submit" class="primary" id="obs-connect">Conectar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="tiktok-dialog">
+    <h2>TikTok LIVE Studio</h2>
+    <ol class="guide">
+      <li>En Windows, abrí TikTok LIVE Studio y elegí una escena del editor.</li>
+      <li>Pulsá <strong>Agregar fuente</strong> y elegí <strong>Captura de ventana</strong>.</li>
+      <li>Seleccioná <strong>OBS TTiktok Auto-Record — STATION</strong>.</li>
+      <li>Ajustá el encuadre y comprobá el video en la vista previa.</li>
+      <li>Reproducí un video con sonido y verificá que se mueva el medidor. Usá una sola vía de audio para el reproductor.</li>
+    </ol>
+    <label class="check"><input type="checkbox" id="tiktok-verified"> Verifiqué imagen y audio en mi escena</label>
+    <div class="dialog-actions"><button type="button" data-close>Cerrar</button><button type="button" class="primary" data-reveal>Abrir ventana de captura</button></div>
+  </dialog>
+
+  <dialog id="settings-dialog">
+    <form id="settings-form">
+      <h2>Ajustes</h2>
+      <div class="form-grid">
+        <div><label for="quality">Calidad WEBM</label><select id="quality"><option value="2">2 Mb/s</option><option value="5">5 Mb/s</option><option value="8">8 Mb/s</option></select></div>
+        <div><label for="record-height">Resolución WEBM</label><select id="record-height"><option value="0">Original</option><option value="720">Hasta 720p</option><option value="1080">Hasta 1080p</option></select></div>
+        <div><label for="record-fps">FPS WEBM</label><select id="record-fps"><option value="0">Original</option><option value="24">Hasta 24</option><option value="30">Hasta 30</option><option value="60">Hasta 60</option></select></div>
+        <div><label for="theme">Tema</label><select id="theme"><option value="dark">Oscuro</option><option value="light">Claro</option></select></div>
+      </div>
+      <label for="download-folder">Subcarpeta en Descargas</label>
+      <input id="download-folder" placeholder="OBS TTiktok Auto-Record" maxlength="120" autocomplete="off">
+      <label class="check"><input type="checkbox" id="ask-where"> Preguntar dónde guardar cada WEBM</label>
+      <label class="check"><input type="checkbox" id="remember-url"> Recordar el último enlace público sin parámetros</label>
+      <p id="settings-message" class="dialog-message" role="status" hidden></p>
+      <div class="dialog-actions"><button type="button" id="reset-settings">Restaurar valores</button><button type="button" data-close>Cancelar</button><button type="submit" class="primary">Guardar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="history-dialog">
+    <h2>Historial de grabaciones</h2>
+    <p class="form-info" id="history-empty">Todavía no hay grabaciones de Chrome.</p>
+    <ul id="history-list" class="history-list"></ul>
+    <div class="dialog-actions"><button type="button" data-close>Cerrar</button></div>
+  </dialog>
+</body>
+</html>

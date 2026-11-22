@@ -1,0 +1,7 @@
+:root { color-scheme: dark; font: 14px 'Segoe UI', sans-serif; }
+body { width: 248px; margin: 0; padding: 16px; color: #e9eef2; background: #11171e; }
+header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+img { width: 32px; height: 32px; }
+button { width: 100%; padding: 9px; border: 0; border-radius: 6px; background: #73e1c5; color: #0a2720; font: inherit; font-weight: 700; cursor: pointer; }
+button:focus-visible { outline: 2px solid #e9eef2; outline-offset: 2px; }
+p { margin-bottom: 0; color: #f9a99d; }
